@@ -833,6 +833,13 @@
         }
       }
 
+      // Live update top mini card ATM info as well
+      if (colIdx === 0 && DOM.headerBtcAtm) {
+        DOM.headerBtcAtm.innerHTML = `ATM: <span>$${formatNumber(data.atmStrike, 0)}</span> (${formatCurrency(data.atmStraddle, 1)})`;
+      } else if (colIdx === (STATE.layoutColumns === 2 ? 1 : 2) && DOM.headerEthAtm) {
+        DOM.headerEthAtm.innerHTML = `ATM: <span>$${formatNumber(data.atmStrike, 0)}</span> (${formatCurrency(data.atmStraddle, 2)})`;
+      }
+
       // Update straddle values in table cells
       data.rows.forEach(r => {
         const cacheKey = `${asset}-${expiryCode}-${r.strike}`;
