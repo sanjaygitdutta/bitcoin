@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitcoin & Ethereum Live Straddle Matrix | Delta Exchange</title>
+  <meta name="description" content="Side-by-side live Options Straddle and Strike Matrix for Bitcoin (BTC) and Ethereum (ETH) with 10 strikes above ATM and 10 strikes below ATM, real-time from Delta Exchange WebSocket.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-classic">
+  <div class="app-layout">
+    <!-- TOP NAVIGATION BAR -->
+    <header class="top-nav">
+      <div class="brand-section">
+        <div class="logo-badge">
+          <div class="crypto-icons">
+            <span class="crypto-pill btc-pill">₿</span>
+            <span class="crypto-pill eth-pill">Ξ</span>
+          </div>
+          <div>
+            <h1 class="brand-title">DeltaStraddle <span class="pro-tag">LIVE MATRIX</span></h1>
+            <p class="brand-subtitle">Real-Time Strike & Straddle Engine • 10 Above ATM + ATM + 10 Below ATM</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN VIEW SWITCHER -->
+      <div class="view-switcher-bar">
+        <button id="btnViewMatrix" class="view-tab-btn active" title="Side-by-side BTC & ETH Straddle Matrix">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="3" width="7" height="18" rx="1"></rect>
+            <rect x="14" y="3" width="7" height="18" rx="1"></rect>
+          </svg>
+          <span>Straddle Matrix (BTC & ETH)</span>
+        </button>
+        <button id="btnViewChain" class="view-tab-btn" title="Detailed Greek & Options Chain View">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <span>Detailed Chain</span>
+        </button>
+      </div>
+
+      <div class="nav-controls">
+        <!-- THEME TOGGLE BUTTON -->
+        <button id="btnThemeToggle" class="btn btn-secondary btn-theme" title="Toggle Classic Sheet vs Dark Terminal Theme">
+          <span class="theme-icon-sun">☀️ Classic Sheet</span>
+          <span class="theme-icon-moon">🌙 Pro Dark</span>
+        </button>
+
+        <!-- CONNECTION STATUS -->
+        <div class="connection-status" id="wsStatusBadge">
+          <span class="status-pulse" id="statusPulse"></span>
+          <span class="status-text" id="statusText">CONNECTING...</span>
+          <span class="ping-latency" id="pingLatency">--ms</span>
+        </div>
+
+        <!-- EXCHANGE SERVER SELECT -->
+        <div class="exchange-selector">
+          <label for="exchangeServerSelect" class="sr-only">Exchange Server</label>
+          <select id="exchangeServerSelect" class="custom-select small-select" title="Switch Delta Exchange endpoint">
+            <option value="global" selected>Delta Global (delta.exchange)</option>
+            <option value="india">Delta India (india.delta.exchange)</option>
+          </select>
+        </div>
+
+        <button id="btnManualRefresh" class="btn btn-secondary" title="Fetch latest snapshot">
+          <svg class="icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Refresh</span>
+        </button>
+
+        <div class="export-dropdown">
+          <button id="btnExportMenu" class="btn btn-primary">
+            <svg class="icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path>
+            </svg>
+            <span>Export Data</span>
+          </button>
+          <div class="dropdown-menu" id="exportDropdownMenu">
+            <button id="btnExportCSV" class="dropdown-item">Export to CSV</button>
+            <button id="btnExportJSON" class="dropdown-item">Export to JSON</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- SUMMARY TICKER BAR -->
+    <section class="ticker-summary-bar">
+      <!-- BTC Summary Card -->
+      <div class="ticker-mini-card btc-card">
+        <div class="ticker-card-top">
+          <span class="mini-coin-pill btc-pill">₿ BITCOIN</span>
+          <span class="ticker-live-badge">SPOT INDEX</span>
+        </div>
+        <div class="ticker-card-bottom">
+          <div class="mini-price" id="headerBtcPrice">$--,---.--</div>
+          <div class="mini-change" id="headerBtcChange">--%</div>
+          <div class="mini-atm-info" id="headerBtcAtm">ATM: <span>--</span></div>
+        </div>
+      </div>
+
+      <!-- ETH Summary Card -->
+      <div class="ticker-mini-card eth-card">
+        <div class="ticker-card-top">
+          <span class="mini-coin-pill eth-pill">Ξ ETHEREUM</span>
+          <span class="ticker-live-badge">SPOT INDEX</span>
+        </div>
+        <div class="ticker-card-bottom">
+          <div class="mini-price" id="headerEthPrice">$--,---.--</div>
+          <div class="mini-change" id="headerEthChange">--%</div>
+          <div class="mini-atm-info" id="headerEthAtm">ATM: <span>--</span></div>
+        </div>
+      </div>
+
+      <!-- MATRIX CONFIGURATION CONTROLS -->
+      <div class="matrix-controls-panel">
+        <div class="control-unit">
+          <span class="control-label">Layout:</span>
+          <div class="segmented-control" id="layoutControl">
+            <button id="btnLayout4Col" class="segment-btn active" data-layout="4">4 Columns (Multi-Expiry)</button>
+            <button id="btnLayout2Col" class="segment-btn" data-layout="2">2 Columns (BTC + ETH)</button>
+          </div>
+        </div>
+
+        <div class="control-unit">
+          <span class="control-label">Pricing Base:</span>
+          <div class="segmented-control" id="pricingControl">
+            <button id="btnPriceMark" class="segment-btn active" data-mode="mark">Mark Price</button>
+            <button id="btnPriceLtp" class="segment-btn" data-mode="ltp">LTP</button>
+          </div>
+        </div>
+
+        <div class="strike-rule-badge">
+          <span class="badge-icon">🎯</span>
+          <span class="badge-text"><strong>10 Upper Strikes</strong> + <strong>ATM</strong> + <strong>10 Lower Strikes</strong> (21 Strikes)</span>
+        </div>
+
+        <div class="audio-toggle-wrapper">
+          <label class="toggle-switch">
+            <input type="checkbox" id="chkAudioAlerts">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">Ticks Audio</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- PRIMARY INTERFACE: MULTI-ASSET STRADDLE MATRIX (PHOTO STYLE) -->
+    <!-- ================================================================= -->
+    <main class="matrix-workspace" id="matrixWorkspace">
+      <div class="matrix-grid-container" id="matrixGridContainer">
+        <!-- Rendered dynamically by app.js: 4 or 2 side-by-side columns -->
+        <div class="matrix-loading-placeholder">
+          <div class="table-loader">
+            <div class="spinner"></div>
+            <span>Loading Bitcoin and Ethereum real-time straddle data from Delta Exchange...</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ================================================================= -->
+    <!-- SECONDARY INTERFACE: DETAILED OPTIONS CHAIN (TABBED VIEW) -->
+    <!-- ================================================================= -->
+    <section class="chain-workspace" id="chainWorkspace" style="display: none;">
+      <!-- Chain Controls -->
+      <div class="chain-toolbar">
+        <div class="chain-asset-tabs">
+          <button id="tabChainBTC" class="asset-tab active" data-asset="BTC">
+            <span class="coin-icon btc-color">₿</span>
+            <span>Bitcoin (BTC)</span>
+          </button>
+          <button id="tabChainETH" class="asset-tab" data-asset="ETH">
+            <span class="coin-icon eth-color">Ξ</span>
+            <span>Ethereum (ETH)</span>
+          </button>
+        </div>
+
+        <div class="filter-group">
+          <label for="chainExpirySelect" class="filter-label">Expiration:</label>
+          <div class="select-wrapper">
+            <select id="chainExpirySelect" class="custom-select">
+              <option value="">Loading expiries...</option>
+            </select>
+          </div>
+          <span class="dte-badge" id="chainDteBadge">DTE: --</span>
+        </div>
+
+        <div class="filter-group">
+          <label for="chainStrikeCountSelect" class="filter-label">Strikes:</label>
+          <div class="select-wrapper">
+            <select id="chainStrikeCountSelect" class="custom-select">
+              <option value="21" selected>21 Strikes (10 Above + ATM + 10 Below)</option>
+              <option value="10">10 Strikes Around ATM</option>
+              <option value="all">All Available Strikes</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chain Table -->
+      <div class="table-wrapper">
+        <table class="options-straddle-table" id="straddleTable">
+          <thead>
+            <tr>
+              <th class="ce-header col-delta">CE Δ</th>
+              <th class="ce-header col-iv">CE IV</th>
+              <th class="ce-header col-oi">CE OI</th>
+              <th class="ce-header col-bid">CE Bid</th>
+              <th class="ce-header col-ask">CE Ask</th>
+              <th class="ce-header col-ltp">CE LTP</th>
+              <th class="ce-header col-mark highlight-col">CE Mark</th>
+              <th class="strike-header col-strike highlight-col">STRIKE</th>
+              <th class="straddle-header col-straddle highlight-gold">STRADDLE PRICE</th>
+              <th class="straddle-header col-straddle-ba">STRADDLE BID-ASK</th>
+              <th class="straddle-header col-straddle-be">BREAKEVENS</th>
+              <th class="straddle-header col-straddle-pct">% SPOT</th>
+              <th class="pe-header col-mark highlight-col">PE Mark</th>
+              <th class="pe-header col-ltp">PE LTP</th>
+              <th class="pe-header col-bid">PE Bid</th>
+              <th class="pe-header col-ask">PE Ask</th>
+              <th class="pe-header col-oi">PE OI</th>
+              <th class="pe-header col-iv">PE IV</th>
+              <th class="pe-header col-delta">PE Δ</th>
+            </tr>
+          </thead>
+          <tbody id="straddleTableBody">
+            <tr class="loading-row">
+              <td colspan="19">
+                <div class="table-loader">
+                  <div class="spinner"></div>
+                  <span>Connecting to Delta Exchange...</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>Powered by <strong class="delta-link">Delta Exchange Public API v2 & WebSocket</strong></span>
+        <span class="sep">•</span>
+        <span>ATM Algorithm: <code>min(|Strike - Spot|)</code></span>
+        <span class="sep">•</span>
+        <span>Range: <code>10 Upper Strikes + ATM + 10 Lower Strikes</code></span>
+      </div>
+      <div class="footer-right">
+        <span id="footerConnectionInfo">WebSocket: wss://socket.delta.exchange</span>
+        <span class="sep">•</span>
+        <span id="lastPushTimeBadge">Push: --:--:--</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
