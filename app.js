@@ -110,7 +110,20 @@
     straddleTableBody: document.getElementById('straddleTableBody'),
 
     footerConnectionInfo: document.getElementById('footerConnectionInfo'),
-    lastPushTimeBadge: document.getElementById('lastPushTimeBadge')
+    lastPushTimeBadge: document.getElementById('lastPushTimeBadge'),
+
+    // Login & Security Gate
+    loginScreen: document.getElementById('loginScreen'),
+    loginCard: document.getElementById('loginCard'),
+    loginForm: document.getElementById('loginForm'),
+    loginPasswordInput: document.getElementById('loginPasswordInput'),
+    btnTogglePassword: document.getElementById('btnTogglePassword'),
+    loginErrorMsg: document.getElementById('loginErrorMsg'),
+    btnLoginSubmit: document.getElementById('btnLoginSubmit'),
+    btnPinClear: document.getElementById('btnPinClear'),
+    btnPinBackspace: document.getElementById('btnPinBackspace'),
+    btnLockTerminal: document.getElementById('btnLockTerminal'),
+    appLayout: document.getElementById('appLayout')
   };
 
   // --- AUDIO SYNTHESIZER ---
@@ -1167,8 +1180,111 @@
     }, 1000);
   }
 
+  // --- AUTHENTICATION & SECURITY GATE (PASSWORD: 1010) ---
+  const REQUIRED_PASSWORD = '1010';
+
+  function isUserAuthenticated() {
+    return sessionStorage.getItem('delta_terminal_auth') === REQUIRED_PASSWORD;
+  }
+
+  function showLoginScreen() {
+    if (DOM.loginScreen) {
+      DOM.loginScreen.classList.remove('hidden');
+      DOM.loginPasswordInput.value = '';
+      DOM.loginErrorMsg.textContent = '';
+      setTimeout(() => DOM.loginPasswordInput.focus(), 120);
+    }
+  }
+
+  function hideLoginScreen() {
+    if (DOM.loginScreen) {
+      DOM.loginScreen.classList.add('hidden');
+    }
+  }
+
+  function attemptLogin(entered) {
+    if (entered === REQUIRED_PASSWORD) {
+      sessionStorage.setItem('delta_terminal_auth', REQUIRED_PASSWORD);
+      hideLoginScreen();
+      playTickSound(true);
+      if (STATE.tickersMap.size === 0) {
+        fetchInitialSnapshot();
+      }
+    } else {
+      DOM.loginErrorMsg.textContent = 'Incorrect password. Access denied.';
+      DOM.loginCard.classList.add('shake');
+      setTimeout(() => DOM.loginCard.classList.remove('shake'), 400);
+      DOM.loginPasswordInput.value = '';
+      DOM.loginPasswordInput.focus();
+    }
+  }
+
+  function bindAuthListeners() {
+    if (!DOM.loginForm) return;
+
+    DOM.loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      attemptLogin(DOM.loginPasswordInput.value.trim());
+    });
+
+    DOM.loginPasswordInput.addEventListener('input', (e) => {
+      DOM.loginErrorMsg.textContent = '';
+      if (e.target.value.length === 4 && e.target.value === REQUIRED_PASSWORD) {
+        attemptLogin(e.target.value);
+      }
+    });
+
+    document.querySelectorAll('.pin-key[data-digit]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        DOM.loginPasswordInput.value += btn.dataset.digit;
+        DOM.loginErrorMsg.textContent = '';
+        if (DOM.loginPasswordInput.value.length === 4) {
+          attemptLogin(DOM.loginPasswordInput.value);
+        }
+      });
+    });
+
+    if (DOM.btnPinClear) {
+      DOM.btnPinClear.addEventListener('click', () => {
+        DOM.loginPasswordInput.value = '';
+        DOM.loginErrorMsg.textContent = '';
+        DOM.loginPasswordInput.focus();
+      });
+    }
+
+    if (DOM.btnPinBackspace) {
+      DOM.btnPinBackspace.addEventListener('click', () => {
+        DOM.loginPasswordInput.value = DOM.loginPasswordInput.value.slice(0, -1);
+        DOM.loginPasswordInput.focus();
+      });
+    }
+
+    if (DOM.btnTogglePassword) {
+      DOM.btnTogglePassword.addEventListener('click', () => {
+        const isPass = DOM.loginPasswordInput.type === 'password';
+        DOM.loginPasswordInput.type = isPass ? 'text' : 'password';
+        DOM.btnTogglePassword.textContent = isPass ? '🔒' : '👁️';
+      });
+    }
+
+    if (DOM.btnLockTerminal) {
+      DOM.btnLockTerminal.addEventListener('click', () => {
+        sessionStorage.removeItem('delta_terminal_auth');
+        showLoginScreen();
+      });
+    }
+  }
+
   // --- INITIALIZE APPLICATION ---
   bindEventListeners();
-  fetchInitialSnapshot();
+  bindAuthListeners();
+
+  if (isUserAuthenticated()) {
+    hideLoginScreen();
+    fetchInitialSnapshot();
+  } else {
+    showLoginScreen();
+  }
 
 })();
+

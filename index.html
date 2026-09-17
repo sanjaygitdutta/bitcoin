@@ -11,7 +11,85 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="theme-classic">
-  <div class="app-layout">
+  <!-- ================================================================= -->
+  <!-- LOGIN / SECURITY GATE SCREEN (PASSWORD: 1010) -->
+  <!-- ================================================================= -->
+  <div id="loginScreen" class="login-screen-overlay">
+    <div class="login-card" id="loginCard">
+      <div class="login-header">
+        <div class="login-crypto-badge">
+          <span class="crypto-pill btc-pill">₿</span>
+          <span class="crypto-pill eth-pill">Ξ</span>
+        </div>
+        <h2 class="login-title">DeltaStraddle <span class="pro-tag">PRO</span></h2>
+        <p class="login-subtitle">Bitcoin & Ethereum Live Straddle Matrix</p>
+        <div class="security-badge">
+          <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span>AUTHORIZED TRADER ACCESS</span>
+        </div>
+      </div>
+
+      <form id="loginForm" class="login-form" autocomplete="off">
+        <div class="input-field-wrapper">
+          <label for="loginPasswordInput" class="input-label">Terminal Access Password</label>
+          <div class="password-box">
+            <svg class="lock-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input 
+              type="password" 
+              id="loginPasswordInput" 
+              class="login-input" 
+              placeholder="Enter password" 
+              maxlength="16" 
+              autofocus 
+              required
+              autocomplete="current-password"
+            >
+            <button type="button" id="btnTogglePassword" class="btn-toggle-eye" title="Toggle password visibility">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <div id="loginErrorMsg" class="login-error-msg"></div>
+
+        <!-- Quick PIN Keypad -->
+        <div class="pin-keypad">
+          <button type="button" class="pin-key" data-digit="1">1</button>
+          <button type="button" class="pin-key" data-digit="2">2</button>
+          <button type="button" class="pin-key" data-digit="3">3</button>
+          <button type="button" class="pin-key" data-digit="4">4</button>
+          <button type="button" class="pin-key" data-digit="5">5</button>
+          <button type="button" class="pin-key" data-digit="6">6</button>
+          <button type="button" class="pin-key" data-digit="7">7</button>
+          <button type="button" class="pin-key" data-digit="8">8</button>
+          <button type="button" class="pin-key" data-digit="9">9</button>
+          <button type="button" class="pin-key pin-clear" id="btnPinClear">C</button>
+          <button type="button" class="pin-key" data-digit="0">0</button>
+          <button type="button" class="pin-key pin-back" id="btnPinBackspace">⌫</button>
+        </div>
+
+        <button type="submit" id="btnLoginSubmit" class="btn btn-primary btn-unlock">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 9.9-1"></path>
+          </svg>
+          <span>Unlock Terminal</span>
+        </button>
+      </form>
+
+      <div class="login-footer-hint">
+        <span>Protected Terminal • Password required</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-layout" id="appLayout">
     <!-- TOP NAVIGATION BAR -->
     <header class="top-nav">
       <div class="brand-section">
@@ -77,6 +155,11 @@
             <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
           <span>Refresh</span>
+        </button>
+
+        <button id="btnLockTerminal" class="btn btn-secondary btn-lock" title="Lock Dashboard (Require Password 1010)">
+          <span>🔒</span>
+          <span>Lock</span>
         </button>
 
         <div class="export-dropdown">
