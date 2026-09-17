@@ -244,6 +244,9 @@
       // Render Matrix UI
       renderStraddleMatrix();
 
+      // Start 1-second polling loop
+      start1sPollingEngine();
+
       // If Chain view is open, render that too
       if (STATE.activeView === 'chain') {
         renderClassicChain();
@@ -1113,10 +1116,15 @@
       subscribeLiveChannels();
       renderClassicChain();
     });
+  }
 
-    // High-frequency 1-second refresh engine
-    let isFetchingOptions = false;
+  // --- 1-SECOND HIGH-FREQUENCY REFRESH ENGINE ---
+  let isFetchingOptions = false;
+  function start1sPollingEngine() {
+    if (STATE.pollTimer) return;
+
     STATE.pollTimer = setInterval(async () => {
+      if (!isUserAuthenticated()) return;
       const endpoint = ENDPOINTS[STATE.exchange].rest;
       const now = new Date();
       DOM.lastPushTimeBadge.textContent = `1s Live: ${now.toTimeString().split(' ')[0]}`;
@@ -1207,7 +1215,13 @@
       sessionStorage.setItem('delta_terminal_auth', REQUIRED_PASSWORD);
       hideLoginScreen();
       playTickSound(true);
-      if (STATE.tickersMap.size === 0) {
+      // Immediately render existing data if present, and fetch live snapshot
+      if (STATE.expiries.BTC.length > 0 && STATE.expiries.ETH.length > 0) {
+        assignDefaultColumnExpiries();
+        renderStraddleMatrix();
+        initWebSocket();
+        start1sPollingEngine();
+      } else {
         fetchInitialSnapshot();
       }
     } else {
@@ -1229,7 +1243,7 @@
 
     DOM.loginPasswordInput.addEventListener('input', (e) => {
       DOM.loginErrorMsg.textContent = '';
-      if (e.target.value.length === 4 && e.target.value === REQUIRED_PASSWORD) {
+      if (e.target.value === REQUIRED_PASSWORD) {
         attemptLogin(e.target.value);
       }
     });
@@ -1238,7 +1252,7 @@
       btn.addEventListener('click', () => {
         DOM.loginPasswordInput.value += btn.dataset.digit;
         DOM.loginErrorMsg.textContent = '';
-        if (DOM.loginPasswordInput.value.length === 4) {
+        if (DOM.loginPasswordInput.value === REQUIRED_PASSWORD) {
           attemptLogin(DOM.loginPasswordInput.value);
         }
       });
@@ -1270,6 +1284,14 @@
     if (DOM.btnLockTerminal) {
       DOM.btnLockTerminal.addEventListener('click', () => {
         sessionStorage.removeItem('delta_terminal_auth');
+        if (STATE.pollTimer) {
+          clearInterval(STATE.pollTimer);
+          STATE.pollTimer = null;
+        }
+        if (STATE.ws) {
+          try { STATE.ws.close(); } catch(e) {}
+          STATE.ws = null;
+        }
         showLoginScreen();
       });
     }
